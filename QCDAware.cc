@@ -58,7 +58,7 @@ namespace contrib {
             pjd.dist = _dm->dij(cs.jets()[iJet], cs.jets()[jJet]);
             pjds.push(pjd);
 
-            cout << "distance to jet " << jJet << " with flavor " <<
+            cout << "distance to pseudojet " << jJet << " with flavor " <<
                 cs.jets()[jJet].user_index() << ":" << endl
                 << pjd.dist << endl;
         }
@@ -115,12 +115,6 @@ namespace contrib {
 
         int labi = pj1.user_index();
         int labj = pj2.user_index();
-
-        if (labi == 21 || labi == 22)
-            labi = 0;
-
-        if (labj == 21 || labj == 22)
-            labj = 0;
 
         // gg -> g      : 0 + 0 = 0
         // qg -> q      : x + 0 = x

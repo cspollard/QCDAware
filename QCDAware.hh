@@ -33,7 +33,7 @@
 #include <queue>
 #include <string>
 #include <vector>
-#include "DistanceMeasure.hh"
+#include "fastjet/contrib/DistanceMeasure.hh"
 
 FASTJET_BEGIN_NAMESPACE      // defined in fastjet/internal/base.hh
 
