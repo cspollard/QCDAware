@@ -43,31 +43,39 @@ namespace contrib {
             int iJet,
             vector<bool>& ismerged) const {
 
+        const PseudoJet& ijet = cs.jets()[iJet];
+
         cout << "--------" << endl
             << "inserting new pseudojet " << iJet << endl
-            << "with flavor " << cs.jets()[iJet].user_index() << endl;
+            << "with flavor " << cs.jets()[iJet].user_index() << endl
+            << "pt eta phi " << ijet.pt() << " "
+            << ijet.eta() << " " << ijet.phi() << endl;
 
         for (unsigned int jJet = 0; jJet < iJet; jJet++) {
             // don't calculate distances for already-merged pjs
             if (ismerged[jJet])
                 continue;
 
+            const PseudoJet& jjet = cs.jets()[jJet];
+
             PJDist pjd;
             pjd.pj1 = iJet;
             pjd.pj2 = jJet;
-            pjd.dist = _dm->dij(cs.jets()[iJet], cs.jets()[jJet]);
+            pjd.dist = _dm->dij(ijet, jjet);
             pjds.push(pjd);
 
             cout << "distance to pseudojet " << jJet << " with flavor " <<
-                cs.jets()[jJet].user_index() << ":" << endl
-                << pjd.dist << endl;
+                jjet.user_index() << endl
+                << "pt eta phi " << jjet.pt() << " "
+                << jjet.eta() << " " << jjet.phi()
+                << ":" << endl << pjd.dist << endl;
         }
 
         // calculate the beam distance
         PJDist pjd;
         pjd.pj1 = iJet;
         pjd.pj2 = -1;
-        pjd.dist = _dm->diB(cs.jets()[iJet]);
+        pjd.dist = _dm->diB(ijet);
         pjds.push(pjd);
 
         cout << "distance to beam:" << endl
@@ -102,15 +110,12 @@ namespace contrib {
             const PJDist& pjd,
             std::vector<bool>& ismerged) const {
 
-        int newidx;
-        cs.plugin_record_ij_recombination(pjd.pj1, pjd.pj2, pjd.dist, newidx);
-
         // mark both old pjs as merged
         ismerged[pjd.pj1] = true;
         ismerged[pjd.pj2] = true;
 
-        PseudoJet pj1 = cs.jets()[pjd.pj1];
-        PseudoJet pj2 = cs.jets()[pjd.pj2];
+        const PseudoJet& pj1 = cs.jets()[pjd.pj1];
+        const PseudoJet& pj2 = cs.jets()[pjd.pj2];
         PseudoJet pj3 = pj1 + pj2;
 
         int labi = pj1.user_index();
@@ -121,13 +126,19 @@ namespace contrib {
         // qqbar -> g   : x - x = 0
         pj3.set_user_index(labi + labj);
 
-        cout << "--------" << endl
-            << "merging pseudojets " << pjd.pj1 << " and " << pjd.pj2 << endl
-            << "into " << newidx << endl
-            << "--------" << endl;
-
+        int newidx;
+        cs.plugin_record_ij_recombination(pjd.pj1, pjd.pj2, pjd.dist, pj3, newidx);
 
         insert_pj(cs, pjds, newidx, ismerged);
+
+        cout << "--------" << endl
+            << "merging pseudojets " << pjd.pj1 << " and " << pjd.pj2 << endl
+            << "with flavors " << labi << " " << labj << endl
+            << "and distance " << pjd.dist << endl
+            << "into pseudojet " << newidx << endl
+            << "with flavor " << labi + labj << endl
+            << "--------" << endl;
+
 
         return;
     }
