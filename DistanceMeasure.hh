@@ -1,3 +1,7 @@
+#ifndef __DISTANCEMEASURE_HH__
+#define __DISTANCEMEASURE_HH__
+
+#include <float.h>
 #include <algorithm>
 #include "fastjet/PseudoJet.hh"
 
@@ -79,6 +83,42 @@ namespace contrib {
             }
     };
 
+    // helper functions
+    namespace {
+        inline bool isQuark(const fastjet::PseudoJet& p) {
+            return abs(p.user_index()) <= 6;
+        }
+
+        inline bool isGluon(const fastjet::PseudoJet& p) {
+            return p.user_index() == 21;
+        }
+
+        inline bool isPhoton(const fastjet::PseudoJet& p) {
+            return p.user_index() == 22;
+        }
+
+        inline bool canCluster(const fastjet::PseudoJet& p, const fastjet::PseudoJet& q) {
+            // a quark can cluster with a photon or gluon.
+            if (    // kind of complicated, so indented
+                    (isQuark(p) && (isGluon(q) || isPhoton(q))) ||
+                    ((isGluon(p) || isPhoton(p)) && isQuark(q))
+                )
+                return true;
+
+            // gluons can cluster.
+            else if (isGluon(p) && isGluon(q))
+                return true;
+
+            // same-flavor quark and anti-quark can cluster.
+            else if (isQuark(p) && isQuark(q) &&
+                    (p.user_index() + q.user_index() == 0))
+                return true;
+
+            // nothing else allowed. (for now... muahahaha!)
+            return false;
+        }
+    }
+
 
     template <class T>
     class QCDAwareDistanceMeasure : public DistanceMeasure {
@@ -90,23 +130,9 @@ namespace contrib {
 
             inline double dij(const fastjet::PseudoJet& pji, const fastjet::PseudoJet& pjj) const {
 
-                // label = pdgid
-                int labi = pji.user_index();
-                int labj = pjj.user_index();
-
-                if (abs(labi) > 6)
-                    std::cout << "found a QCDAware jet constituent with label = " <<
-                        labi << ".\nExiting." << std::endl;
-
-                if (abs(labj) > 6)
-                    std::cout << "found a QCDAware jet constituent with label = " <<
-                        labj << ".\nExiting." << std::endl;
-
-
-                double dist = t.dij(pji, pjj);
                 /*
                 std::cout << "calculating qcdaware distance: " << std::endl;
-                std::cout << "original distance: " << dist << std::endl;
+                std::cout << "original distance: " << t.dij(pji, pjj) << std::endl;
                 std::cout << "pseudojet i pt eta phi lab : "
                     << pji.pt() << " "
                     << pji.eta() << " "
@@ -121,19 +147,10 @@ namespace contrib {
                 */
 
 
-                // not allowed: qq or qbarqbar clustering
-                if (labi * labj > 0) {
-                    // std::cout << "attempting qq or qbarqbar clustering..." << std::endl;
-                    dist = 999*t.diB(pji);
-                // not allowed: different flavor clustering
-                } else if (labi && labj && (labi + labj)) {
-                    // std::cout << "attempting to cluster quarks with different flavors..." << std::endl;
-                    dist = 999*t.diB(pji);
-                }
-
-                // std::cout << "final distance: " << dist << std::endl;
-
-                return dist;
+                if (canCluster(pji, pjj))
+                    return t.dij(pji, pjj);
+                else
+                    return DBL_MAX;
             }
 
             inline double diB(const fastjet::PseudoJet& pji) const {
@@ -145,6 +162,9 @@ namespace contrib {
             }
     };
 
+
 }
 
 FASTJET_END_NAMESPACE
+
+#endif

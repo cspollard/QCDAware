@@ -26,8 +26,6 @@
 #ifndef __FASTJET_CONTRIB_QCDAWARE_HH__
 #define __FASTJET_CONTRIB_QCDAWARE_HH__
 
-
-
 #include "fastjet/internal/base.hh"
 #include "fastjet/JetDefinition.hh"
 #include <queue>
@@ -48,6 +46,8 @@ namespace contrib{
 
 
     //------------------------------------------------------------------------
+    // @todo
+    // this class isn't really QCDAware; the distance measure is...
     class QCDAware : public JetDefinition::Plugin {
         private:
             const DistanceMeasure *_dm;
