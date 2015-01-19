@@ -40,7 +40,7 @@ namespace contrib {
 
     void QCDAware::insert_pj(ClusterSequence &cs,
             priority_queue<PJDist, vector<PJDist>, greater<PJDist> >& pjds,
-            int iJet,
+            unsigned int iJet,
             vector<bool>& ismerged) const {
 
         const PseudoJet& ijet = cs.jets()[iJet];

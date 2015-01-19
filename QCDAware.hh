@@ -28,6 +28,7 @@
 
 #include "fastjet/internal/base.hh"
 #include "fastjet/JetDefinition.hh"
+#include "fastjet/ClusterSequence.hh"
 #include <queue>
 #include <string>
 #include <vector>
@@ -54,7 +55,7 @@ namespace contrib{
 
         void insert_pj(ClusterSequence &cs,
                 std::priority_queue<PJDist, std::vector<PJDist>, std::greater<PJDist> >& pjds,
-                int iJet,
+                unsigned int iJet,
                 std::vector<bool>& ismerged) const;
 
         void merge_iB(ClusterSequence &cs,
