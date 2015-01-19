@@ -121,10 +121,23 @@ namespace contrib {
         int labi = pj1.user_index();
         int labj = pj2.user_index();
 
-        // gg -> g      : 0 + 0 = 0
-        // qg -> q      : x + 0 = x
-        // qqbar -> g   : x - x = 0
-        pj3.set_user_index(labi + labj);
+        // qqbar -> g
+        if (labi + labj == 0)
+            pj3.set_user_index(21);
+        // gg -> g
+        else if (labi == 21 && labj == 21)
+            pj3.set_user_index(21);
+        // qg and qgamma -> q
+        else if (abs(labi) <= 6)
+            pj3.set_user_index(labi);
+        else if (abs(labj) <= 6)
+            pj3.set_user_index(labj);
+        else {
+            cout << "ERROR: attempting to merge pseudojets with pdgids "
+                << labi << " and " << labj
+                << ", which is not allowed: this will probably break." << endl;
+            pj3.set_user_index(-999);
+        }
 
         int newidx;
         cs.plugin_record_ij_recombination(pjd.pj1, pjd.pj2, pjd.dist, pj3, newidx);
@@ -136,7 +149,7 @@ namespace contrib {
             << "with flavors " << labi << " " << labj << endl
             << "and distance " << pjd.dist << endl
             << "into pseudojet " << newidx << endl
-            << "with flavor " << labi + labj << endl
+            << "with flavor " << pj3.user_index() << endl
             << "--------" << endl;
 
 

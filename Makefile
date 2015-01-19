@@ -20,7 +20,7 @@ EXAMPLES=example
 INSTALLED_HEADERS=QCDAware.hh DistanceMeasure.hh
 #------------------------------------------------------------------------
 
-CXXFLAGS+= $(shell $(FASTJETCONFIG) --cxxflags)
+CXXFLAGS+= $(shell $(FASTJETCONFIG) --cxxflags) -fPIC
 LDFLAGS += -lm $(shell $(FASTJETCONFIG) --libs)
 
 OBJS  = $(SRCS:.cc=.o)
