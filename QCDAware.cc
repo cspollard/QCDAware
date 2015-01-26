@@ -45,11 +45,13 @@ namespace contrib {
 
         const PseudoJet& ijet = cs.jets()[iJet];
 
+        /*
         cout << "--------" << endl
             << "inserting new pseudojet " << iJet << endl
             << "with flavor " << cs.jets()[iJet].user_index() << endl
             << "pt eta phi " << ijet.pt() << " "
             << ijet.eta() << " " << ijet.phi() << endl;
+        */
 
         for (unsigned int jJet = 0; jJet < iJet; jJet++) {
             // don't calculate distances for already-merged pjs
@@ -64,11 +66,13 @@ namespace contrib {
             pjd.dist = _dm->dij(ijet, jjet);
             pjds.push(pjd);
 
+            /*
             cout << "distance to pseudojet " << jJet << " with flavor " <<
                 jjet.user_index() << endl
                 << "pt eta phi " << jjet.pt() << " "
                 << jjet.eta() << " " << jjet.phi()
                 << ":" << endl << pjd.dist << endl;
+            */
         }
 
         // calculate the beam distance
@@ -78,12 +82,14 @@ namespace contrib {
         pjd.dist = _dm->diB(ijet);
         pjds.push(pjd);
 
+        /*
         cout << "distance to beam:" << endl
             << pjd.dist << endl;
 
-        ismerged.push_back(false);
-
         cout << "--------" << endl;
+        */
+
+        ismerged.push_back(false);
 
         return;
     }
@@ -93,10 +99,12 @@ namespace contrib {
             const PJDist& pjd,
             std::vector<bool>& ismerged) const {
 
+        /*
         cout << "--------" << endl
             << "merging pseudojet " << pjd.pj1 << endl
             << "into the beam" << endl
             << "--------" << endl;
+            */
 
         cs.plugin_record_iB_recombination(pjd.pj1, pjd.dist);
 
@@ -144,6 +152,7 @@ namespace contrib {
 
         insert_pj(cs, pjds, newidx, ismerged);
 
+        /*
         cout << "--------" << endl
             << "merging pseudojets " << pjd.pj1 << " and " << pjd.pj2 << endl
             << "with flavors " << labi << " " << labj << endl
@@ -151,6 +160,7 @@ namespace contrib {
             << "into pseudojet " << newidx << endl
             << "with flavor " << pj3.user_index() << endl
             << "--------" << endl;
+        */
 
 
         return;
