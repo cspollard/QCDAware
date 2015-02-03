@@ -97,11 +97,16 @@ namespace contrib {
             return p.user_index() == 22;
         }
 
+        inline bool isLepton(const fastjet::PseudoJet& p) {
+            int abspid = abs(p.user_index());
+            return (abspid == 11 || abspid == 13);
+        }
+
         inline bool canCluster(const fastjet::PseudoJet& p, const fastjet::PseudoJet& q) {
             // a quark can cluster with a photon or gluon.
             if (    // kind of complicated, so indented
-                    (isQuark(p) && (isGluon(q) || isPhoton(q))) ||
-                    ((isGluon(p) || isPhoton(p)) && isQuark(q))
+                    (isQuark(p) && (isGluon(q) || isPhoton(q)) ) ||
+                    ( (isGluon(p) || isPhoton(p)) && isQuark(q))
                 )
                 return true;
 
@@ -113,6 +118,14 @@ namespace contrib {
             else if (isQuark(p) && isQuark(q) &&
                     (p.user_index() + q.user_index() == 0))
                 return true;
+
+            // leptons and photons can cluster.
+            else if (
+                        (isLepton(p) && isPhoton(q)) ||
+                        (isPhoton(p) && isLepton(q))
+                    )
+                return true;
+
 
             // nothing else allowed. (for now... muahahaha!)
             return false;

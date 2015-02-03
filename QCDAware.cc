@@ -129,16 +129,26 @@ namespace contrib {
         int labi = pj1.user_index();
         int labj = pj2.user_index();
 
+        int abslabi = abs(labi);
+        int abslabj = abs(labj);
+
         // qqbar -> g
-        if (labi + labj == 0)
+        if (abslabi <= 6 && labi + labj == 0)
             pj3.set_user_index(21);
         // gg -> g
         else if (labi == 21 && labj == 21)
             pj3.set_user_index(21);
-        // qg and qgamma -> q
-        else if (abs(labi) <= 6)
+        // lgamma -> l
+        else if ((abslabi == 11 || abslabi == 13) && labj == 22)
             pj3.set_user_index(labi);
-        else if (abs(labj) <= 6)
+        // gammal -> l
+        else if ((abslabj == 11 || abslabj == 13) && labi == 22)
+            pj3.set_user_index(labj);
+        // qg and qgamma -> q
+        else if (abslabi <= 6 && (labj == 21 || labj == 22))
+            pj3.set_user_index(labi);
+        // gq and gammaq -> q
+        else if (abslabj <= 6 && (labi == 21 || labi == 22))
             pj3.set_user_index(labj);
         else {
             cout << "ERROR: attempting to merge pseudojets with pdgids "
