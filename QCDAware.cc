@@ -38,6 +38,29 @@ namespace contrib {
     }
 
 
+    // helper functions
+    namespace {
+        inline bool isQuark(const fastjet::PseudoJet& p) {
+            return abs(p.user_index()) <= 6;
+        }
+
+        inline bool isGluon(const fastjet::PseudoJet& p) {
+            return p.user_index() == 21;
+        }
+
+        inline bool isPhoton(const fastjet::PseudoJet& p) {
+            return p.user_index() == 22;
+        }
+
+        inline bool isLepton(const fastjet::PseudoJet& p) {
+            int abspid = abs(p.user_index());
+            return (abspid == 11 || abspid == 13);
+        }
+
+    }
+
+
+
     void QCDAware::insert_pj(ClusterSequence &cs,
             priority_queue<PJDist, vector<PJDist>, greater<PJDist> >& pjds,
             unsigned int iJet,
@@ -46,12 +69,12 @@ namespace contrib {
         const PseudoJet& ijet = cs.jets()[iJet];
 
         /*
-        cout << "--------" << endl
-            << "inserting new pseudojet " << iJet << endl
-            << "with flavor " << cs.jets()[iJet].user_index() << endl
-            << "pt eta phi " << ijet.pt() << " "
-            << ijet.eta() << " " << ijet.phi() << endl;
-        */
+           cout << "--------" << endl
+           << "inserting new pseudojet " << iJet << endl
+           << "with flavor " << cs.jets()[iJet].user_index() << endl
+           << "pt eta phi " << ijet.pt() << " "
+           << ijet.eta() << " " << ijet.phi() << endl;
+           */
 
         for (unsigned int jJet = 0; jJet < iJet; jJet++) {
             // don't calculate distances for already-merged pjs
@@ -63,16 +86,22 @@ namespace contrib {
             PJDist pjd;
             pjd.pj1 = iJet;
             pjd.pj2 = jJet;
-            pjd.dist = _dm->dij(ijet, jjet);
+
+            int c = cluster_partons(ijet, jjet);
+            if (c == 0)
+                pjd.dist = DBL_MAX;
+            else
+                pjd.dist = _dm->dij(ijet, jjet);
+
             pjds.push(pjd);
 
             /*
-            cout << "distance to pseudojet " << jJet << " with flavor " <<
-                jjet.user_index() << endl
-                << "pt eta phi " << jjet.pt() << " "
-                << jjet.eta() << " " << jjet.phi()
-                << ":" << endl << pjd.dist << endl;
-            */
+               cout << "distance to pseudojet " << jJet << " with flavor " <<
+               jjet.user_index() << endl
+               << "pt eta phi " << jjet.pt() << " "
+               << jjet.eta() << " " << jjet.phi()
+               << ":" << endl << pjd.dist << endl;
+               */
         }
 
         // calculate the beam distance
@@ -83,11 +112,11 @@ namespace contrib {
         pjds.push(pjd);
 
         /*
-        cout << "distance to beam:" << endl
-            << pjd.dist << endl;
+           cout << "distance to beam:" << endl
+           << pjd.dist << endl;
 
-        cout << "--------" << endl;
-        */
+           cout << "--------" << endl;
+           */
 
         ismerged.push_back(false);
 
@@ -100,11 +129,11 @@ namespace contrib {
             std::vector<bool>& ismerged) const {
 
         /*
-        cout << "--------" << endl
-            << "merging pseudojet " << pjd.pj1 << endl
-            << "into the beam" << endl
-            << "--------" << endl;
-            */
+           cout << "--------" << endl
+           << "merging pseudojet " << pjd.pj1 << endl
+           << "into the beam" << endl
+           << "--------" << endl;
+           */
 
         cs.plugin_record_iB_recombination(pjd.pj1, pjd.dist);
 
@@ -126,36 +155,14 @@ namespace contrib {
         const PseudoJet& pj2 = cs.jets()[pjd.pj2];
         PseudoJet pj3 = pj1 + pj2;
 
-        int labi = pj1.user_index();
-        int labj = pj2.user_index();
-
-        int abslabi = abs(labi);
-        int abslabj = abs(labj);
-
-        // qqbar -> g
-        if (abslabi <= 6 && labi + labj == 0)
-            pj3.set_user_index(21);
-        // gg -> g
-        else if (labi == 21 && labj == 21)
-            pj3.set_user_index(21);
-        // lgamma -> l
-        else if ((abslabi == 11 || abslabi == 13) && labj == 22)
-            pj3.set_user_index(labi);
-        // gammal -> l
-        else if ((abslabj == 11 || abslabj == 13) && labi == 22)
-            pj3.set_user_index(labj);
-        // qg and qgamma -> q
-        else if (abslabi <= 6 && (labj == 21 || labj == 22))
-            pj3.set_user_index(labi);
-        // gq and gammaq -> q
-        else if (abslabj <= 6 && (labi == 21 || labi == 22))
-            pj3.set_user_index(labj);
-        else {
+        int c = cluster_partons(pj1, pj2);
+        if (c == 0) {
             cout << "ERROR: attempting to merge pseudojets with pdgids "
-                << labi << " and " << labj
-                << ", which is not allowed: this will probably break." << endl;
+                << pj1.user_index() << " and " << pj2.user_index()
+                << ", which is not allowed. This will probably break." << endl;
             pj3.set_user_index(-999);
-        }
+        } else
+            pj3.set_user_index(c);
 
         int newidx;
         cs.plugin_record_ij_recombination(pjd.pj1, pjd.pj2, pjd.dist, pj3, newidx);
@@ -163,18 +170,45 @@ namespace contrib {
         insert_pj(cs, pjds, newidx, ismerged);
 
         /*
-        cout << "--------" << endl
-            << "merging pseudojets " << pjd.pj1 << " and " << pjd.pj2 << endl
-            << "with flavors " << labi << " " << labj << endl
-            << "and distance " << pjd.dist << endl
-            << "into pseudojet " << newidx << endl
-            << "with flavor " << pj3.user_index() << endl
-            << "--------" << endl;
-        */
+           cout << "--------" << endl
+           << "merging pseudojets " << pjd.pj1 << " and " << pjd.pj2 << endl
+           << "with flavors " << labi << " " << labj << endl
+           << "and distance " << pjd.dist << endl
+           << "into pseudojet " << newidx << endl
+           << "with flavor " << pj3.user_index() << endl
+           << "--------" << endl;
+           */
 
 
         return;
     }
+
+    int QCDAware::cluster_partons(const fastjet::PseudoJet& p, const fastjet::PseudoJet& q) const {
+        // a quark can cluster with a photon or gluon.
+        if ( isQuark(p) && (isGluon(q) || isPhoton(q)) )
+            return p.user_index();
+        else if ( (isGluon(p) || isPhoton(p)) && isQuark(q))
+            return q.user_index();
+
+        // gluons can cluster.
+        else if (isGluon(p) && isGluon(q))
+            return 21;
+
+        // same-flavor quark and anti-quark can cluster.
+        else if (isQuark(p) && isQuark(q) &&
+                (p.user_index() + q.user_index() == 0))
+            return 21;
+
+        // leptons and photons can cluster.
+        else if (isLepton(p) && isPhoton(q))
+            return p.user_index();
+        else if (isPhoton(p) && isLepton(q))
+            return q.user_index();
+
+        // nothing else allowed. (for now... muahahaha!)
+        return 0;
+    }
+
 
 
     void QCDAware::run_clustering(ClusterSequence& cs) const {
@@ -218,6 +252,8 @@ namespace contrib {
     }
 
 
+
 } // namespace contrib
+
 
 FASTJET_END_NAMESPACE

@@ -49,38 +49,42 @@ namespace contrib{
     //------------------------------------------------------------------------
     // @todo
     // this class isn't really QCDAware; the distance measure is...
-    class QCDAware : public JetDefinition::Plugin {
-        private:
-            const DistanceMeasure *_dm;
+        class QCDAware : public JetDefinition::Plugin {
+            private:
+                const DistanceMeasure *_dm;
 
-        void insert_pj(ClusterSequence &cs,
-                std::priority_queue<PJDist, std::vector<PJDist>, std::greater<PJDist> >& pjds,
-                unsigned int iJet,
-                std::vector<bool>& ismerged) const;
+                void insert_pj(ClusterSequence &cs,
+                        std::priority_queue<PJDist, std::vector<PJDist>, std::greater<PJDist> >& pjds,
+                        unsigned int iJet,
+                        std::vector<bool>& ismerged) const;
 
-        void merge_iB(ClusterSequence &cs,
-                const PJDist& dist,
-                std::vector<bool>& ismerged) const;
+                void merge_iB(ClusterSequence &cs,
+                        const PJDist& dist,
+                        std::vector<bool>& ismerged) const;
 
-        void merge_ij(ClusterSequence &cs,
-                std::priority_queue<PJDist, std::vector<PJDist>, std::greater<PJDist> >& pjds,
-                const PJDist& dist,
-                std::vector<bool>& ismerged) const;
+                void merge_ij(ClusterSequence &cs,
+                        std::priority_queue<PJDist, std::vector<PJDist>, std::greater<PJDist> >& pjds,
+                        const PJDist& dist,
+                        std::vector<bool>& ismerged) const;
 
-        public:
-            /// default constructor
-            QCDAware(DistanceMeasure *dm)
-                : _dm(dm) {}
+                // returns zero if p and q aren't allowed to combine.
+                // returns the combined pid otherwise.
+                int cluster_partons(const fastjet::PseudoJet& p, const fastjet::PseudoJet& q) const;
 
-            /// default destructor
-            ~QCDAware() {}
+            public:
+                /// default constructor
+                QCDAware(DistanceMeasure *dm)
+                    : _dm(dm) {}
 
-            void run_clustering(fastjet::ClusterSequence& cs) const;
+                /// default destructor
+                ~QCDAware() {}
 
-            std::string description() const;
+                void run_clustering(fastjet::ClusterSequence& cs) const;
 
-            double R() const;
-    };
+                std::string description() const;
+
+                double R() const;
+        };
 
 
 } // namespace contrib
